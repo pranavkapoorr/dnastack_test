@@ -28,7 +28,7 @@ public class BeaconSummaryService {
 		try{
 			resp = beaconClient.getBeacon(ref,chrom,pos,allele,referenceAllel,beacons);
 		}catch(Exception e) {
-			resp = new ResponseEntity<String>(HttpStatus.NOT_FOUND);
+			resp = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 		}
 		return resp;
 	}
@@ -52,7 +52,7 @@ public class BeaconSummaryService {
 			try {
 				beaconResp = getBeacons(ref,chrom,pos,allele,referenceAllel,b.getId());
 			} catch (Exception e) {
-				beaconResp = new ResponseEntity<String>(HttpStatus.NOT_FOUND);
+				beaconResp = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 			}
 			if(beaconResp.getStatusCode().equals(HttpStatus.OK)) {
 				found.incrementAndGet();
