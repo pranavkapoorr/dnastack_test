@@ -1,0 +1,20 @@
+ribbon:
+  eureka:
+    enabled: false
+beacon:
+  ribbon:
+    isSecure: true
+    listOfServers: https://beacon-network.org:443
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 3000
+        readTimeout: 3000
+        maxAutoRetries: 0
+        loggerLevel: full
+        decode404: true
+        errorDecoder: 
+          com.dnastack.interview.beaconsummarizer.client.beacon.ClientErrorDecoder
+        requestInterceptors:
+          com.dnastack.interview.beaconsummarizer.utils.ListInterceptor
