@@ -46,6 +46,7 @@ public class BeaconSummaryService {
 					int beaconCount = (int) beacons.stream().filter((b) -> b.getOrganization().equalsIgnoreCase(o.getName())).count();
 					return new OrganizationSummary(o.getName(), beaconCount);
 				})
+				.sorted((OrganizationSummary o1,OrganizationSummary o2) -> o2.getBeacons()-o1.getBeacons())
 				.collect(Collectors.toList());
 		beacons.forEach((b) -> {
 			ResponseEntity<String> beaconResp;
