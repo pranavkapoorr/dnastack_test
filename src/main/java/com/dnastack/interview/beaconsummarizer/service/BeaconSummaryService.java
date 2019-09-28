@@ -1,8 +1,10 @@
 package com.dnastack.interview.beaconsummarizer.service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -23,14 +25,20 @@ public class BeaconSummaryService {
     }
 	
 	@Async
-    private ResponseEntity<String> getBeacons(String ref,String chrom,String pos,String allele,String referenceAllel,String... beacons){
-		ResponseEntity<String> resp = null;
-		try{
-			resp = beaconClient.getBeacon(ref,chrom,pos,allele,referenceAllel,beacons);
-		}catch(Exception e) {
-			resp = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
-		}
-		return resp;
+    private CompletableFuture<ResponseEntity<String>> getBeacons(String ref,String chrom,String pos,String allele,String referenceAllel,String... beacons){
+		CompletableFuture<ResponseEntity<String>> future = CompletableFuture.supplyAsync(new Supplier<ResponseEntity<String>>() {
+			  @Override
+	            public ResponseEntity<String> get() {
+				  ResponseEntity<String> res = null;
+	                try{
+	                	res = beaconClient.getBeacon(ref,chrom,pos,allele,referenceAllel,beacons);
+					  }catch(Exception e) {
+							res = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
+					  }
+		                return res;
+		            }
+	        });
+		return future;
 	}
 	
 	
@@ -51,7 +59,7 @@ public class BeaconSummaryService {
 		beacons.forEach((b) -> {
 			ResponseEntity<String> beaconResp;
 			try {
-				beaconResp = getBeacons(ref,chrom,pos,allele,referenceAllel,b.getId());
+				beaconResp = getBeacons(ref,chrom,pos,allele,referenceAllel,b.getId()).get();
 			} catch (Exception e) {
 				beaconResp = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 			}
