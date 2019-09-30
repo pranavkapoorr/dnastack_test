@@ -25,20 +25,14 @@ public class BeaconSummaryService {
     }
 	
 	@Async
-    private CompletableFuture<ResponseEntity<String>> getBeacons(String ref,String chrom,String pos,String allele,String referenceAllel,String... beacons){
-		CompletableFuture<ResponseEntity<String>> future = CompletableFuture.supplyAsync(new Supplier<ResponseEntity<String>>() {
-			  @Override
-	            public ResponseEntity<String> get() {
-				  ResponseEntity<String> res = null;
+    private ResponseEntity<String> getBeacon(String ref,String chrom,String pos,String allele,String referenceAllel,String... beacons){
+		ResponseEntity<String> res = null;
 	                try{
 	                	res = beaconClient.getBeacon(ref,chrom,pos,allele,referenceAllel,beacons);
 					  }catch(Exception e) {
 							res = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
 					  }
-		                return res;
-		            }
-	        });
-		return future;
+		        return res;
 	}
 	
 	
@@ -57,19 +51,25 @@ public class BeaconSummaryService {
 				.sorted((OrganizationSummary o1,OrganizationSummary o2) -> o2.getBeacons()-o1.getBeacons())
 				.collect(Collectors.toList());
 		beacons.forEach((b) -> {
-			ResponseEntity<String> beaconResp;
-			try {
-				beaconResp = getBeacons(ref,chrom,pos,allele,referenceAllel,b.getId()).get();
-			} catch (Exception e) {
-				beaconResp = new ResponseEntity<String>(HttpStatus.NO_CONTENT);
-			}
-			if(beaconResp.getStatusCode().equals(HttpStatus.OK)) {
+			 CompletableFuture.supplyAsync(() -> getBeacon(ref,chrom,pos,allele,referenceAllel,b.getId()))
+			 //.completeOnTimeout(new Result(Status.TIMED_OUT),1, TimeUnit.MINUTES)
+			 .thenAccept((bResp) -> {
+							if(bResp.getStatusCode().equals(HttpStatus.OK)) {
+								found.incrementAndGet();
+							}else if(bResp.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+								notFound.incrementAndGet();
+							}else {
+								notResponding.incrementAndGet();
+							}
+						});
+			
+			/*if(beaconResp.getStatusCode().equals(HttpStatus.OK)) {
 				found.incrementAndGet();
 			}else if(beaconResp.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
 				notFound.incrementAndGet();
 			}else {
 				notResponding.incrementAndGet();
-			}
+			}*/
 		});
 		
 		return new BeaconSummary(summary, found.get(), notFound.get(), 0, notResponding.get());
