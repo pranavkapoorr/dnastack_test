@@ -1,10 +1,9 @@
 package com.dnastack.interview.beaconsummarizer.service;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -50,9 +49,9 @@ public class BeaconSummaryService {
 				})
 				.sorted((OrganizationSummary o1,OrganizationSummary o2) -> o2.getBeacons()-o1.getBeacons())
 				.collect(Collectors.toList());
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
 		beacons.forEach((b) -> {
-			 CompletableFuture.supplyAsync(() -> getBeacon(ref,chrom,pos,allele,referenceAllel,b.getId()))
-			 //.completeOnTimeout(new Result(Status.TIMED_OUT),1, TimeUnit.MINUTES)
+			 CompletableFuture<Void> temp = CompletableFuture.supplyAsync(() -> getBeacon(ref,chrom,pos,allele,referenceAllel,b.getId()))
 			 .thenAccept((bResp) -> {
 							if(bResp.getStatusCode().equals(HttpStatus.OK)) {
 								found.incrementAndGet();
@@ -62,14 +61,18 @@ public class BeaconSummaryService {
 								notResponding.incrementAndGet();
 							}
 						});
+			futures.add(temp);
 			
-			/*if(beaconResp.getStatusCode().equals(HttpStatus.OK)) {
-				found.incrementAndGet();
-			}else if(beaconResp.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-				notFound.incrementAndGet();
-			}else {
-				notResponding.incrementAndGet();
-			}*/
+		});
+		/**block thread to populate responses from assync requests**/
+		futures.forEach(f -> {
+			try {
+				f.get();
+			} catch (InterruptedException e) {
+				System.err.print("error -> "+e.getMessage());
+			} catch (ExecutionException e) {
+				System.err.print("error -> "+e.getMessage());
+			}
 		});
 		
 		return new BeaconSummary(summary, found.get(), notFound.get(), 0, notResponding.get());
