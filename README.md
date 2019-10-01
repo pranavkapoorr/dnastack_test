@@ -132,3 +132,8 @@ Beacon Network API is documented here: [https://beacon-network.org/#/developers/
 Your solution will be evaluated for readability, ease of future maintenance in the face of changing
 requirements, and correctness. Considerations for performance are nice-to-have, but must not interfere
 with the primary goals.
+
+### Result
+
+The implementation was successfully able to achieve the desired result in 26.31 seconds as shown in screenshot below:
+![screenshot](https://raw.githubusercontent.com/pranavkapoorr/dnastack_test/master/Screenshot%202019-09-30%20at%2022.05.56.png)
